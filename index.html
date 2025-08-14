@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>ACCESS: HAFSA — Interactive Recruitment Simulation</title>
+<style>
+:root{
+  --bg:#000;
+  --fg:#0f0;
+  --dim:#0a800a;
+  --tip:#4aff4a;
+  --accent:#0f0;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, "Liberation Mono", Consolas, "Courier New", monospace;
+}
+*{box-sizing:border-box}
+html,body{height:100%; margin:0; background:var(--bg); color:var(--fg); font-family:var(--mono);}
+/* Container */
+.wrapper{ max-width:1100px; margin:0 auto; padding:20px; height:100vh; display:flex; flex-direction:column; }
+/* Output area (scrollable) */
+#terminal{
+  flex:1; overflow:auto; padding:12px 18px 90px 18px; /* bottom padding for fixed input */
+  position:relative;
+  border-radius:6px;
+  background: linear-gradient(180deg, rgba(0,0,0,0.0), rgba(0,0,0,0.02));
+}
+#terminal::before{
+  content:""; position:absolute; inset:0; pointer-events:none;
+  background: repeating-linear-gradient(0deg, transparent 0 2px, rgba(0,255,0,0.04) 2px 3px);
+  mix-blend-mode: lighten; opacity:0.6;
+}
+#output{ white-space:pre-wrap; line-height:1.5; font-size:15px; }
+.line{ opacity:0; transform:translateY(6px); animation:in 160ms ease-out forwards; }
+@keyframes in{ to{opacity:1; transform:none} }
+hr.sep{ border:none; border-top:1px solid var(--dim); margin:10px 0; opacity:.9; }
+
+/* Fixed CMD input at bottom */
+#cmdbar{ position:fixed; left:50%; transform:translateX(-50%); bottom:18px; width:min(980px, calc(100% - 40px)); z-index:60; }
+#input-line{ display:flex; gap:10px; align-items:center; background:transparent; padding:6px; }
+.prompt{ min-width:64px; color:var(--fg); user-select:none; }
+#input-wrap{ position:relative; flex:1; }
+#cmd{ width:100%; background:#000; color:var(--fg); border:1px solid var(--dim); padding:8px 10px; font:inherit; font-size:15px; caret-color:transparent; }
+#block-caret{ position:absolute; top:50%; transform:translateY(-50%); width:0.6ch; height:1.25em; background:var(--fg); animation:blink 1s steps(1) infinite; pointer-events:none; }
+@keyframes blink{ 50%{ background:transparent } }
+
+#tip{ position:fixed; left:50%; transform:translateX(-50%); bottom:68px; color:var(--tip); font-size:13px; opacity:.95; z-index:59; }
+
+/* Top-right silent icon */
+#controls{ position:fixed; right:18px; top:18px; display:flex; gap:8px; align-items:center; z-index:80; }
+.icon{ width:38px; height:38px; display:grid; place-items:center; border:1px solid var(--dim); background:rgba(0,0,0,0.3); cursor:pointer; }
+.icon svg{ fill:var(--fg); width:20px; height:20px; opacity:0.95; }
+.icon.muted svg{ opacity:0.35; transform:scale(.95); }
+
+/* Overlay & decrypt loader */
+#overlay{ position:fixed; inset:0; display:none; align-items:center; justify-content:center; background:rgba(0,0,0,0.88); z-index:120; }
+#overlay.show{ display:flex; }
+.modal{ width:min(960px,95%); background:#000; border:1px solid var(--dim); padding:16px; color:var(--fg); }
+.loader{ background:#041004; border:1px solid var(--dim); height:18px; width:100%; position:relative; overflow:hidden; margin-top:12px; }
+.progress{ position:absolute; left:0; top:0; bottom:0; width:0%; background:linear-gradient(90deg, #063, #0f0); transition:width .2s linear; }
+.loader .percent{ float:right; color:var(--fg); font-family:var(--mono); font-size:13px; }
+
+/* Showcase iframe */
+.showcase-frame{ width:100%; aspect-ratio:16/9; background:#000; border:1px solid var(--dim); margin-top:12px; }
+
+/* Full access simple styles */
+#full-access{ display:none; background:transparent; padding:12px; }
+.card{ border:1px solid var(--dim); padding:10px; margin-bottom:10px; }
+
+/* Tab suggestions */
+#suggest{ position:fixed; left:50%; transform:translateX(-50%); bottom:120px; z-index:70; background:#010201; border:1px solid var(--dim); padding:8px; display:none; max-width:960px; width:calc(100% - 40px); font-size:14px; }
+#suggest ul{ list-style:none; padding:0; margin:0; display:flex; gap:8px; flex-wrap:wrap; }
+#suggest li{ border:1px solid var(--dim); padding:6px 8px; cursor:pointer; }
+
+/* responsive */
+@media (max-width:480px){
+  #cmdbar{ bottom:8px; width:calc(100% - 20px); }
+  #tip{ bottom:56px; font-size:12px; }
+}
+</style>
+</head>
+<body>
+<div class="wrapper">
+  <main id="terminal" role="region" aria-label="Hacker Terminal">
+    <div id="output" aria-live="polite"></div>
+  </main>
+
+  <div id="suggest" role="listbox" aria-hidden="true"><ul></ul></div>
+
+  <div id="cmdbar" aria-hidden="false">
+    <div id="input-line">
+      <div class="prompt">C:\></div>
+      <div id="input-wrap">
+        <input id="cmd" autocomplete="off" spellcheck="false" placeholder="type a command..." aria-label="Command input" />
+        <span id="block-caret" aria-hidden="true"></span>
+      </div>
+    </div>
+  </div>
+
+  <div id="tip">TIP: Type 'help' to get started.</div>
+</div>
+
+<div id="controls">
+  <div id="mute" class="icon" title="Toggle sound" role="button" aria-pressed="false">
+    <svg viewBox="0 0 24 24"><path d="M3 10v4h4l5 5V5L7 10H3z"/><path d="M16.5 12c0-1.77-.77-3.36-1.98-4.47l-1.43 1.43A4.5 4.5 0 0116.5 12zM14.5 17.07L15.93 18.5C17.5 17 18.5 15.08 18.5 13s-1-4-2.57-5.5L14.5 8.93A6.49 6.49 0 0013 13c0 1.67.48 3.22 1.5 4.07z"/></svg>
+  </div>
+</div>
+
+<!-- Overlay modal for loader + showcase -->
+<div id="overlay" aria-hidden="true">
+  <div class="modal" role="dialog" aria-modal="true">
+    <div id="loaderText">DECRYPTING PROJECT FILE...</div>
+    <div class="loader" aria-hidden="true"><div class="progress" style="width:0%"></div><div class="percent">0%</div></div>
+    <div id="showcaseWrap" style="display:none">
+      <div id="showcaseTitle" style="font-weight:700;margin-top:10px"></div>
+      <div id="showcaseDesc" style="margin-top:6px"></div>
+      <div class="showcase-frame" id="showcaseFrame"></div>
+    </div>
+    <div style="margin-top:12px; text-align:right"><button id="closeOverlay" style="padding:6px 10px;border:1px solid var(--dim);background:transparent;color:var(--fg)">Close</button></div>
+  </div>
+</div>
+
+<div id="full-access"></div>
+
+<script>
+/* ===== Utilities & State ===== */
+const output = document.getElementById('output');
+const cmdInput = document.getElementById('cmd');
+const tip = document.getElementById('tip');
+const muteBtn = document.getElementById('mute');
+const overlay = document.getElementById('overlay');
+const progressBar = overlay.querySelector('.progress');
+const percentLabel = overlay.querySelector('.percent');
+const loaderText = document.getElementById('loaderText');
+const showcaseWrap = document.getElementById('showcaseWrap');
+const showcaseFrame = document.getElementById('showcaseFrame');
+const showcaseTitle = document.getElementById('showcaseTitle');
+const showcaseDesc = document.getElementById('showcaseDesc');
+const closeOverlay = document.getElementById('closeOverlay');
+const suggest = document.getElementById('suggest');
+const suggestList = suggest.querySelector('ul');
+
+let soundOn = true;
+let tabMatches = [];
+let tabIndex = 0;
+
+/* Configuration (projects + commands) */
+const projects = [
+  {code:'racing', title:'RACING_EDGE — Bike/Car Racing', desc:'High-performance mobile racing with tight physics and low-end optimization.', src:'https://www.youtube.com/embed/O_pl-TAtxHU'},
+  {code:'vr', title:'VR_STRIKE — VR Bowling (Quest)', desc:'Realistic physics-based VR bowling with polished inputs.', src:'https://www.youtube.com/embed/TJuODlA7qDM'},
+  {code:'kart', title:'KART_CHAIN — Multiplayer Kart + NFTs', desc:'Networked kart prototype with asset ownership hooks.', src:'https://www.youtube.com/embed/SZ99QHJdv38'},
+  {code:'edu', title:'EDU_QUEST — Educational RPG', desc:'2D RPG with quizzes, cutscenes, PlayFab cloud saves.', src:'https://www.youtube.com/embed/kMPPdmt0_aY'},
+  {code:'puzzle', title:'PUZZLE_FRAME — Animated Puzzle', desc:'Puzzle experience with animation system for retention.', src:'https://www.youtube.com/embed/IlIHceq9jIs'},
+  {code:'ui', title:'UI_ANIMS — UI Animation Collection', desc:'UI motion studies and animations for games.', src:'https://www.youtube.com/embed/Ok6Qg8b8lWI'}
+];
+
+const commandsList = ['help','profile','projects','skills','contact','resume','theme','sound','sudo','funfacts','future','clear'];
+const projectCodes = projects.map(p=>p.code);
+
+/* ===== Typing animation queue (simple) ===== */
+let queue = Promise.resolve();
+const typeSpeed = 14;
+
+function typeLine(text){
+  queue = queue.then(()=> new Promise(resolve=>{
+    const div = document.createElement('div');
+    div.className = 'line';
+    output.appendChild(div);
+    let i=0;
+    const tick = setInterval(()=>{
+      div.textContent = text.slice(0, ++i);
+      output.scrollTop = output.scrollHeight;
+      if(i>=text.length){ clearInterval(tick); resolve(); }
+    }, typeSpeed);
+  }));
+  return queue;
+}
+function typeBlock(lines){
+  lines.forEach(l=>{ typeLine(l); });
+  return queue;
+}
+
+/* ===== Audio (WebAudio) ===== */
+const AudioEngine = (function(){
+  const ctx = new (window.AudioContext || window.webkitAudioContext)();
+  const master = ctx.createGain(); master.gain.value = 0.12; master.connect(ctx.destination);
+
+  function tone(freq,dur,type='sine',gain=0.08){
+    const t0=ctx.currentTime;
+    const o = ctx.createOscillator(); o.type = type; o.frequency.value = freq;
+    const g = ctx.createGain(); g.gain.setValueAtTime(gain,t0);
+    g.gain.exponentialRampToValueAtTime(0.0001,t0+dur);
+    o.connect(g).connect(master); o.start(t0); o.stop(t0+dur+0.02);
+  }
+  function tick(){ tone(900,0.02,'square',0.06); }
+  function enter(){ tone(520,0.08,'sine',0.08); }
+  function error(){ tone(120,0.12,'sawtooth',0.12); }
+  function hum(){ /* optional */ }
+  return { tick, enter, error, tone, hum, ctx, master };
+})();
+
+/* ===== Print helpers ===== */
+function print(text){ return typeLine(text); }
+function printBlock(lines){ return typeBlock(lines); }
+function setTip(t){ tip.textContent = "TIP: " + t; }
+
+/* ===== Boot & fake password (hint hire_hafsa) ===== */
+async function boot(){
+  await print("[BOOTING RECRUITER INTERFACE...]");
+  await print("Connecting to HAFSA_MAINFRAME...");
+  await print("ACCESS REQUEST DETECTED.");
+  await print("");
+  await print("SECURITY PROTOCOL ACTIVE — Please enter recruiter access password:");
+  setTip('Try something like "hire_hafsa"');
+  cmdInput.focus();
+}
+boot();
+
+/* ===== Command handlers ===== */
+function openProject(code){
+  const p = projects.find(x=>x.code===code);
+  if(!p) return print("404: Project not found.");
+  // Show decrypt loader with ticks then show iframe
+  overlay.classList.add('show'); overlay.setAttribute('aria-hidden','false');
+  showcaseWrap.style.display='none'; loaderText.textContent='DECRYPTING PROJECT FILE...';
+  progressBar.style.width='0%'; percentLabel.textContent='0%';
+  // play tick sounds as loading
+  let pct=0;
+  const interval = setInterval(()=>{
+    pct += Math.floor(Math.random()*8)+4; if(pct>100) pct=100;
+    progressBar.style.width=pct+'%'; percentLabel.textContent=pct+'%';
+    if(soundOn) AudioEngine.tick();
+    if(pct>=100){
+      clearInterval(interval);
+      setTimeout(()=>{
+        // show content
+        loaderText.textContent='DECRYPT COMPLETE';
+        showcaseTitle.textContent=p.title;
+        showcaseDesc.textContent=p.desc;
+        showcaseFrame.innerHTML = `<iframe src="${p.src}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
+        showcaseWrap.style.display='block';
+        if(soundOn) AudioEngine.enter();
+      }, 350);
+    }
+  }, 180);
+  // mark viewed localStorage
+  const seen = JSON.parse(localStorage.getItem('viewed')||'[]');
+  if(!seen.includes(code)){ seen.push(code); localStorage.setItem('viewed', JSON.stringify(seen)); }
+  // check full access
+  setTimeout(()=>{ const seenNow = JSON.parse(localStorage.getItem('viewed')||'[]'); if(projects.every(p=>seenNow.includes(p.code))){ print(""); print("Recruiter... you have fully explored my career archives. Full Access unlocked."); print("Type 'contact' to reach me."); } }, 1800);
+}
+
+function buildProjectList(){
+  const lines = ["Encrypted Project Files:"];
+  projects.forEach(p=> lines.push(`[ ${p.code} ]  → ${p.title}`));
+  lines.push("", "Type a command in brackets to open it.");
+  return lines;
+}
+
+const commands = {
+  help(){ printBlock([ "Available commands:", "help → show this help", "profile → about me", "projects → list project files", "skills → view skill bars", "contact → contact info", "resume → download resume", "theme → theme light | theme dark", "sound → sound on | sound off", "", "Open a project: racing | vr | kart | edu | puzzle | ui", "", "Extras: sudo hire_hafsa | funfacts | future" ]); },
+  profile(){ printBlock([ "Hafsa Sheikh — Software Engineer | Game Developer (Unity)", "Detail-oriented Unity developer with 3+ years in 2D/3D, mobile, PC, and VR." ]); },
+  projects(){ printBlock(buildProjectList()); },
+  skills(){ printBlock([ "Unity3D       | ██████████ 92%", "C# / OOP      | █████████  90%", "Gameplay      | ████████   88%", "Optimization  | ███████    86%", "UI/UX         | ██████     84%", "Multiplayer   | ██████     82%", "VR            | █████      78%" ]); },
+  contact(){ printBlock([ "Email: engr.hafsasheikh@gmail.com", "Phone: +92 335 5405343", "Type 'resume' to download the resume."]); },
+  resume(){ print("Preparing download..."); const a=document.createElement('a'); a.href='Hafsa_Sheikh_Resume.pdf'; a.download='Hafsa_Sheikh_Resume.pdf'; document.body.appendChild(a); a.click(); a.remove(); if(soundOn) AudioEngine.enter(); },
+  theme(arg){ if(arg==='light'){ document.documentElement.style.setProperty('--fg','#111'); document.body.style.background='#fff'; setTip('Light theme'); } else { document.documentElement.style.setProperty('--fg','#0f0'); document.body.style.background='#000'; setTip('Dark theme'); } },
+  sound(arg){ if(arg==='on'){ soundOn=true; muteBtn.classList.remove('muted'); setTip('Sound enabled'); } else if(arg==='off'){ soundOn=false; muteBtn.classList.add('muted'); setTip('Sound disabled'); } else { print("Usage: sound on | sound off"); } },
+  "sudo": function(){ print("Recruitment Recommendation: HIRE IMMEDIATELY."); print("Opening contact info..."); commands.contact(); },
+  funfacts(){ printBlock(["- Loves turning specs into playful interactions.", "- Favorite bug: the one that disappears with a console.log()", "- Speedrun: polished builds under tight deadlines."]); },
+  future(){ printBlock(["Future ideas:", "• A hub-world portfolio with playable portals", "• Cozy VR physics sandbox with narrative puzzles", "• Multiplayer micro-challenges for teamwork"]); },
+  clear(){ output.innerHTML=''; }
+};
+
+/* ===== Tab completion ===== */
+function getMatches(prefix){
+  const all = [...commandsList, ...projectCodes];
+  return all.filter(s => s.startsWith(prefix));
+}
+
+cmdInput.addEventListener('keydown', function(e){
+  if(e.key === 'Tab'){
+    e.preventDefault();
+    const val = cmdInput.value.trim();
+    if(!val){ // show suggestions top
+      showSuggest([...commandsList, ...projectCodes]);
+      return;
+    }
+    const matches = getMatches(val.toLowerCase());
+    if(matches.length === 1){
+      cmdInput.value = matches[0] + ' ';
+      positionCaret();
+    } else if(matches.length > 1){
+      showSuggest(matches);
+    }
+  }
+});
+
+function showSuggest(list){
+  suggestList.innerHTML='';
+  list.slice(0,12).forEach(it=>{
+    const li = document.createElement('li');
+    li.textContent = it;
+    li.addEventListener('click', ()=>{ cmdInput.value = it + ' '; hideSuggest(); cmdInput.focus(); });
+    suggestList.appendChild(li);
+  });
+  suggest.style.display='block'; suggest.setAttribute('aria-hidden','false');
+}
+function hideSuggest(){ suggest.style.display='none'; suggest.setAttribute('aria-hidden','true'); }
+
+/* ===== Input handling + password fake gate + choices ===== */
+let passwordStage = true;
+cmdInput.addEventListener('keydown', function(e){
+  // update caret position visually
+  positionCaret();
+  if(e.key === 'Enter'){
+    const raw = cmdInput.value.trim();
+    if(!raw) return;
+    typeLine("C:\\> " + raw);
+    cmdInput.value = '';
+    hideSuggest();
+    if(passwordStage){
+      passwordStage = false;
+      if(raw.toLowerCase() === 'hire_hafsa'){
+        print("ACCESS GRANTED — Recruitment Recommendation: HIRE IMMEDIATELY.").then(()=>{
+          print("Would you like to explore my portfolio or proceed to recruitment?");
+          print("Type: portfolio  OR  recruit");
+          setTip("Type 'portfolio' to explore, or 'recruit' to jump to contact.");
+        });
+      } else {
+        print("ACCESS GRANTED — Proceeding to portfolio...").then(()=>{ commands.help(); setTip("Type 'projects' to see my work."); });
+      }
+      return;
+    }
+
+    // if post-hire choice
+    if(raw.toLowerCase() === 'portfolio'){ commands.help(); return; }
+    if(raw.toLowerCase() === 'recruit'){ commands.contact(); return; }
+
+    // commands and project codes
+    const parts = raw.split(/\s+/);
+    const cmd = parts[0].toLowerCase();
+    const arg = parts[1] ? parts[1].toLowerCase() : undefined;
+    if(commands[cmd]){ commands[cmd](arg); return; }
+    if(projectCodes.includes(cmd)){
+      openProject(cmd); return;
+    }
+    // special: sudo hire_hafsa shortcut
+    if(raw.toLowerCase() === 'sudo hire_hafsa'){ commands.sudo(); return; }
+    print("404 Command Not Found — type 'help' for options.");
+  }
+});
+
+/* caret position by ch count */
+function positionCaret(){
+  const caret = document.getElementById('block-caret');
+  const wrap = document.getElementById('input-wrap');
+  const val = cmdInput.value || '';
+  // left offset: 8px padding + chars * ch width (approximate using monospace)
+  caret.style.left = (8 + (val.length) * 9) + 'px';
+}
+
+/* initial caret */
+positionCaret();
+cmdInput.focus();
+
+/* mute icon toggle */
+muteBtn.addEventListener('click', ()=>{
+  soundOn = !soundOn;
+  muteBtn.classList.toggle('muted', !soundOn);
+  muteBtn.setAttribute('aria-pressed', (!soundOn).toString());
+});
+
+/* overlay close */
+closeOverlay.addEventListener('click', ()=>{ overlay.classList.remove('show'); overlay.setAttribute('aria-hidden','true'); showcaseFrame.innerHTML=''; });
+overlay.addEventListener('click', (e)=>{ if(e.target === overlay){ overlay.classList.remove('show'); overlay.setAttribute('aria-hidden','true'); showcaseFrame.innerHTML=''; } });
+
+/* click outside suggest hides */
+document.addEventListener('click', (e)=>{ if(!suggest.contains(e.target) && e.target !== cmdInput) hideSuggest(); });
+
+/* helper to quickly print on load if desired */
+print("CONNECTED: HAFSA_MAINFRAME (interactive mode)").then(()=>{});
+
+</script>
+</body>
+</html>
