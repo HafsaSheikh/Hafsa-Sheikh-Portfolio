@@ -60,7 +60,19 @@ hr.sep{ border:none; border-top:1px solid var(--dim); margin:10px 0; opacity:.9;
 .loader .percent{ float:right; color:var(--fg); font-family:var(--mono); font-size:13px; }
 
 /* Showcase iframe */
-.showcase-frame{ width:100%; aspect-ratio:16/9; background:#000; border:1px solid var(--dim); margin-top:12px; }
+.showcase-frame {
+  width: 100%;
+  height: 70vh; /* Fills most of modal height */
+  background: #000;
+  border: 1px solid var(--dim);
+  margin-top: 12px;
+}
+.showcase-frame iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
 
 /* Full access simple styles */
 #full-access{ display:none; background:transparent; padding:12px; }
@@ -169,6 +181,7 @@ function typeLine(text){
     const tick = setInterval(()=>{
       div.textContent = text.slice(0, ++i);
       output.scrollTop = output.scrollHeight;
+      if(soundOn) AudioEngine.tick(); // Added typing sound
       if(i>=text.length){ clearInterval(tick); resolve(); }
     }, typeSpeed);
   }));
@@ -219,11 +232,11 @@ boot();
 function openProject(code){
   const p = projects.find(x=>x.code===code);
   if(!p) return print("404: Project not found.");
-  // Show decrypt loader with ticks then show iframe
   overlay.classList.add('show'); overlay.setAttribute('aria-hidden','false');
-  showcaseWrap.style.display='none'; loaderText.textContent='DECRYPTING PROJECT FILE...';
+  showcaseWrap.style.display='none';
+  loaderText.textContent='DECRYPTING PROJECT FILE...';
   progressBar.style.width='0%'; percentLabel.textContent='0%';
-  // play tick sounds as loading
+  
   let pct=0;
   const interval = setInterval(()=>{
     pct += Math.floor(Math.random()*8)+4; if(pct>100) pct=100;
@@ -232,11 +245,13 @@ function openProject(code){
     if(pct>=100){
       clearInterval(interval);
       setTimeout(()=>{
-        // show content
         loaderText.textContent='DECRYPT COMPLETE';
         showcaseTitle.textContent=p.title;
         showcaseDesc.textContent=p.desc;
-        showcaseFrame.innerHTML = `<iframe src="${p.src}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
+        // Updated to fill modal
+        showcaseFrame.innerHTML = `<iframe src="${p.src}" frameborder="0"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowfullscreen></iframe>`;
         showcaseWrap.style.display='block';
         if(soundOn) AudioEngine.enter();
       }, 350);
