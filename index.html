@@ -121,6 +121,18 @@
       background:#21262d; color:#00ffae; border-radius:6px; transition:0.3s;
     }
     .btn-icon:hover{background:#00ffae; color:#111;}
+ .thumb{
+      height:160px;background:
+        linear-gradient(120deg, rgba(122,162,255,.18), rgba(99,230,190,.18)),
+        linear-gradient(180deg, #12192a, #0f1420);
+      display:flex;align-items:center;justify-content:center;font-size:46px;color:#9db8ff;
+      border-bottom:1px solid var(--line)
+    }
+.thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover; /* ensures the gif fills the frame without distortion */
+}
 
     /* Timeline */
     .timeline{border-left:3px solid #00ffae; margin-left:15px; padding-left:20px;}
@@ -194,7 +206,7 @@
   
     <div class="stats">
       <div class="stat"><h3>3+</h3><p>Years Experience</p></div>
-      <div class="stat"><h3>10+</h3><p>Projects Shipped</p></div>
+      <div class="stat"><h3>10+</h3><p>Shipped/Playable Projects</p></div>
       <div class="stat"><h3>100+</h3><p>Levels Designed</p></div>
     </div>
  
@@ -204,8 +216,8 @@
     <div class="projects-grid">
 
       <div class="project-card">
-        <div class="project-icon">🔷</div>
-        <h3>Hexa Sort</h3>
+        <div class="thumb"><img src="hexa-puxle.webp" alt="Preview" /></div>
+          <h3>Hexa Sort</h3>
         <p>Number puzzle brain game with engaging sorting mechanics and smooth UI.</p>
         <div class="btn-group">
           <a class="btn-icon" href="https://play.google.com/store/apps/details?id=com.hexasort.number.puzzle.brain.games&pli=1" target="_blank">📱 Play Store</a>
@@ -215,7 +227,8 @@
       </div>
 
       <div class="project-card">
-        <div class="project-icon">🎱</div>
+        <div class="thumb"><img src="ball.gif" alt="Preview" /></div>
+              
         <h3>Connect Balls - Hyper Casual</h3>
         <p>Minimalist hyper casual ball-connecting puzzle game.</p>
         <div class="btn-group">
@@ -225,7 +238,7 @@
       </div>
 
       <div class="project-card">
-        <div class="project-icon">🚗</div>
+        <div class="thumb"><img src="100-lvls.webp" alt="Preview" /></div>
         <h3>Car Simulation: 100+ Levels</h3>
         <p>Modular architecture, difficulty curves, and tuned progression.</p>
         <div class="btn-group">
@@ -235,7 +248,7 @@
       </div>
 
       <div class="project-card">
-        <div class="project-icon">🏍️</div>
+         <div class="thumb"><img src="bike.gif" alt="Preview" /></div>
         <h3>High-Performance Bike Racer</h3>
         <p>3D racing systems, physics, camera, UI/HUD, and profiling.</p>
         <div class="btn-group">
@@ -246,7 +259,7 @@
       </div>
 
       <div class="project-card">
-        <div class="project-icon">🎳</div>
+        <div class="thumb"><img src="bowling.gif" alt="Preview" /></div>
         <h3>VR Bowling (Oculus Quest)</h3>
         <p>Realistic physics, interactions & comfort-first VR UX.</p>
         <div class="btn-group">
@@ -256,7 +269,8 @@
       </div>
 
       <div class="project-card">
-        <div class="project-icon">🎓</div>
+        <div class="thumb"><img src="Dialogues.png" alt="Preview" /></div>
+        
         <h3>2D Educational RPG</h3>
         <p>Cutscenes, quiz combat, PlayFab cloud saves & auth.</p>
         <div class="btn-group">
@@ -267,7 +281,7 @@
       </div>
 
       <div class="project-card">
-        <div class="project-icon">🏎️</div>
+        <div class="thumb"><img src="kartrace.gif" alt="Preview" /></div>
         <h3>Multiplayer Kart Prototype</h3>
         <p>Networked gameplay, sync inputs, asset integration.</p>
         <div class="btn-group">
@@ -277,7 +291,8 @@
       </div>
 
       <div class="project-card">
-        <div class="project-icon">✨</div>
+        <div class="thumb"><img src="ui.gif" alt="Preview" /></div>
+        
         <h3>UI Animations Showcase</h3>
         <p>Snappy UI transitions, menus, and polish animations.</p>
         <div class="btn-group">
@@ -288,11 +303,11 @@
       </div>
 
       <div class="project-card">
-        <div class="project-icon">🚀</div>
+        <div class="thumb"><img src="carRace.gif" alt="Preview" /></div>
         <h3>Car Racing Game (Coming Soon)</h3>
         <p>Placeholder for upcoming gameplay video.</p>
         <div class="btn-group">
-          <a class="btn-icon" href="#" target="_blank">▶️ Video (Coming Soon)</a>
+          <a class="btn-icon"  target="_blank">▶️ Video (Coming Soon)</a>
         </div>
         <div class="tags"><span>Unity</span><span>Racing</span></div>
       </div>
@@ -321,7 +336,6 @@
       </div>
     </div>
   </section>
-
 
 <!-- Skills -->
   <section id="skills" class="container">
@@ -365,7 +379,6 @@
   </section>
 
 
-
   <!-- Education -->
   <section id="education">
     <h2>Education</h2>
@@ -377,6 +390,8 @@
       </div>
     </div>
   </section>
+
+
 
   <!-- Contact -->
   <section id="contact">
@@ -391,10 +406,12 @@
       </div>
       <div class="contact-card">
         <h3>💼 Upwork</h3>
-        <p><a href="https://www.upwork.com/freelancers/hafsas60" target="_blank">upwork.com/freelancers/hafsas60</a></p>
+        <p><a class="btn-hire">Start Contract</a></p>
+<button onclick="window.open('https://www.upwork.com/freelancers/hafsas60', '_blank')">Hire Now</button>
+      
       </div>
       <div class="contact-card">
-        <h3>🌐 Resume</h3>
+        <h3>📋 Resume</h3>
 	<p><a class="btn-hire">Download Resume</a></p>
 <button onclick="window.location.href='https://drive.google.com/uc?export=download&id=16LEDys7TgvajJ_3S-zd0M67wDAE7YmSp';">Download</button>
 
@@ -409,7 +426,7 @@
       </div>
       <textarea id="messageInput" placeholder="Your message"></textarea>
       <div style="margin-top:12px;">
-        <button onclick="sendMail()">Open in Email App</button>
+        <button onclick="sendMail()">Send</button>
       </div>
       <p style="margin-top:10px; font-size:13px; color:#8b949e;">This uses <code>mailto:</code> to open your email client—no data is stored on this site.</p>
     </div>
@@ -424,13 +441,19 @@
         alert("Email copied: " + email);
       });
     }
-    function sendMail(){
-      const name = encodeURIComponent(document.getElementById('nameInput').value || '');
-      const subject = encodeURIComponent(document.getElementById('subjectInput').value || 'Project Inquiry');
-      const body = encodeURIComponent((document.getElementById('messageInput').value || '')
-        + (name ? `\n\n— ${name}` : ''));
-      window.location.href = `mailto:engr.hafsasheikh@gmail.com?subject=${subject}&body=${body}`;
-    }
+   
+function sendMail() {
+  const name = encodeURIComponent(document.getElementById('nameInput').value || '');
+  const subject = encodeURIComponent(document.getElementById('subjectInput').value || 'Project Inquiry');
+  const body = encodeURIComponent(
+    (document.getElementById('messageInput').value || '') +
+    (name ? `\n\n— ${name}` : '')
+  );
+
+  const gmailLink = `https://mail.google.com/mail/?view=cm&fs=1&to=engr.hafsasheikh@gmail.com&su=${subject}&body=${body}`;
+  window.open(gmailLink, '_blank'); // opens in new tab
+}
+
   </script>
 <footer>
     <p>© 2025 Hafsa Sheikh — Built with ❤️</p>
