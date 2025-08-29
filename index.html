@@ -1,400 +1,439 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>ACCESS: HAFSA — Interactive Recruitment Simulation</title>
-<style>
-:root{
-  --bg:#000;
-  --fg:#0f0;
-  --dim:#0a800a;
-  --tip:#4aff4a;
-  --accent:#0f0;
-  --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, "Liberation Mono", Consolas, "Courier New", monospace;
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Hafsa Sheikh | Game Developer Portfolio</title>
+  <style>
+    /* Reset */
+    *{margin:0; padding:0; box-sizing:border-box;}
+    body{font-family:Arial, sans-serif; line-height:1.6; background:#0d1117; color:#e6edf3;}
+    a{text-decoration:none; color:inherit;}
+    img,iframe{max-width:100%; border-radius:10px;}
+
+    /* Navbar */
+    nav{
+      position:sticky; top:0; z-index:1000;
+      display:flex; justify-content:space-between; align-items:center;
+      padding:12px 20px; background:#161b22; color:#fff;
+      border-bottom:1px solid #30363d;
+      backdrop-filter:saturate(120%) blur(6px);
+    }
+    nav .left a{font-size:20px; font-weight:bold; color:#00ffae;}
+    nav .right a{
+      margin-left:15px; padding:8px 14px; border-radius:6px;
+      font-size:14px; transition:0.3s;
+    }
+    nav .btn-hire{background:#00ffae; color:#111;}
+    nav .btn-hire:hover{background:#00cc88;}
+    nav .btn-resume{background:#30363d; color:#fff;}
+    nav .btn-resume:hover{background:#444;}
+
+    /* Sections */
+    section{padding:60px 20px; max-width:1100px; margin:auto;}
+    h1,h2,h3{margin-bottom:20px; font-weight:bold;}
+    h1{font-size:42px;}
+    h2{font-size:28px; color:#00ffae;}
+    h3{color:#00ffae;}
+
+    /* Hero */
+  /*  #hero{text-align:center; padding:100px 20px;}
+    #hero p{max-width:700px; margin:auto; font-size:18px; color:#c9d1d9;}*/
+
+    .stats{display:flex; justify-content:center; gap:30px; margin-top:30px; flex-wrap:wrap;}
+    .stat{background:#161b22; padding:20px 30px; border-radius:10px; text-align:center; min-width:150px; border:1px solid #30363d;}
+    .stat h3{font-size:24px; margin-bottom:5px; color:#00ffae;}
+/* Hero Card */
+.hero-card {
+  background:#161b22;
+  border:1px solid #30363d;
+  border-radius:16px;
+  padding:40px;
+  max-width:900px;
+  margin:auto;
+  box-shadow:0 0 25px rgba(0,0,0,0.5);
+  text-align:left;
 }
-*{box-sizing:border-box}
-html,body{height:100%; margin:0; background:var(--bg); color:var(--fg); font-family:var(--mono);}
-/* Container */
-.wrapper{ max-width:1100px; margin:0 auto; padding:20px; height:100vh; display:flex; flex-direction:column; }
-/* Output area (scrollable) */
-#terminal{
-  flex:1; overflow:auto; padding:12px 18px 90px 18px; /* bottom padding for fixed input */
-  position:relative;
-  border-radius:6px;
-  background: linear-gradient(180deg, rgba(0,0,0,0.0), rgba(0,0,0,0.02));
+.hero-tags {
+  font-size:14px;
+  color:#00ffae;
+  letter-spacing:1px;
+  margin-bottom:14px;
 }
-#terminal::before{
-  content:""; position:absolute; inset:0; pointer-events:none;
-  background: repeating-linear-gradient(0deg, transparent 0 2px, rgba(0,255,0,0.04) 2px 3px);
-  mix-blend-mode: lighten; opacity:0.6;
+.hero-card h1 {
+  font-size:32px;
+  line-height:1.3;
+  margin-bottom:20px;
 }
-#output{ white-space:pre-wrap; line-height:1.5; font-size:15px; }
-.line{ opacity:0; transform:translateY(6px); animation:in 160ms ease-out forwards; }
-@keyframes in{ to{opacity:1; transform:none} }
-hr.sep{ border:none; border-top:1px solid var(--dim); margin:10px 0; opacity:.9; }
-
-/* Fixed CMD input at bottom */
-#cmdbar{ position:fixed; left:50%; transform:translateX(-50%); bottom:18px; width:min(980px, calc(100% - 40px)); z-index:60; }
-#input-line{ display:flex; gap:10px; align-items:center; background:transparent; padding:6px; }
-.prompt{ min-width:64px; color:var(--fg); user-select:none; }
-#input-wrap{ position:relative; flex:1; }
-#cmd{ width:100%; background:#000; color:var(--fg); border:1px solid var(--dim); padding:8px 10px; font:inherit; font-size:15px; caret-color:transparent; }
-#block-caret{ position:absolute; top:50%; transform:translateY(-50%); width:0.6ch; height:1.25em; background:var(--fg); animation:blink 1s steps(1) infinite; pointer-events:none; }
-@keyframes blink{ 50%{ background:transparent } }
-
-#tip{ position:fixed; left:50%; transform:translateX(-50%); bottom:68px; color:var(--tip); font-size:13px; opacity:.95; z-index:59; }
-
-/* Top-right silent icon */
-#controls{ position:fixed; right:18px; top:18px; display:flex; gap:8px; align-items:center; z-index:80; }
-.icon{ width:38px; height:38px; display:grid; place-items:center; border:1px solid var(--dim); background:rgba(0,0,0,0.3); cursor:pointer; }
-.icon svg{ fill:var(--fg); width:20px; height:20px; opacity:0.95; }
-.icon.muted svg{ opacity:0.35; transform:scale(.95); }
-
-/* Overlay & decrypt loader */
-#overlay{ position:fixed; inset:0; display:none; align-items:center; justify-content:center; background:rgba(0,0,0,0.88); z-index:120; }
-#overlay.show{ display:flex; }
-.modal{ width:min(960px,95%); background:#000; border:1px solid var(--dim); padding:16px; color:var(--fg); }
-.loader{ background:#041004; border:1px solid var(--dim); height:18px; width:100%; position:relative; overflow:hidden; margin-top:12px; }
-.progress{ position:absolute; left:0; top:0; bottom:0; width:0%; background:linear-gradient(90deg, #063, #0f0); transition:width .2s linear; }
-.loader .percent{ float:right; color:var(--fg); font-family:var(--mono); font-size:13px; }
-
-/* Showcase iframe */
-.showcase-frame {
-  width: 100%;
-  height: 70vh; /* Fills most of modal height */
-  background: #000;
-  border: 1px solid var(--dim);
-  margin-top: 12px;
+.hero-card .highlight {  border-bottom:2px solid #00ffae;}
+.hero-desc {
+  font-size:16px;
+  color:#c9d1d9;
+  margin-bottom:20px;
 }
-.showcase-frame iframe {
-  width: 100%;
-  height: 100%;
-  border: none;
+.hero-skills {  display:flex; flex-wrap:wrap; gap:10px; margin-bottom:25px;}
+.hero-skills span {
+  background:#21262d;
+  color:#e6edf3;
+  padding:6px 12px;
+  border-radius:20px;
+  font-size:13px;
+}
+.hero-cta a {
+  display:inline-block; margin-right:12px; padding:10px 18px;
+  border-radius:8px; font-weight:bold; font-size:14px;
+}
+.btn-main {
+  background:#00ffae; color:#111;
+}
+.btn-main:hover {
+  background:#00d294;
+}
+.btn-secondary {
+  background:#30363d; color:#e6edf3;
+}
+.btn-secondary:hover {
+  background:#444;
 }
 
 
-/* Full access simple styles */
-#full-access{ display:none; background:transparent; padding:12px; }
-.card{ border:1px solid var(--dim); padding:10px; margin-bottom:10px; }
 
-/* Tab suggestions */
-#suggest{ position:fixed; left:50%; transform:translateX(-50%); bottom:120px; z-index:70; background:#010201; border:1px solid var(--dim); padding:8px; display:none; max-width:960px; width:calc(100% - 40px); font-size:14px; }
-#suggest ul{ list-style:none; padding:0; margin:0; display:flex; gap:8px; flex-wrap:wrap; }
-#suggest li{ border:1px solid var(--dim); padding:6px 8px; cursor:pointer; }
 
-/* responsive */
-@media (max-width:480px){
-  #cmdbar{ bottom:8px; width:calc(100% - 20px); }
-  #tip{ bottom:56px; font-size:12px; }
-}
-</style>
+
+
+    /* Projects */
+    .projects-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:20px; margin-top:20px;}
+    .project-card{
+      background:#161b22; padding:20px; border-radius:12px;
+      border:1px solid #30363d; transition:0.3s;
+    }
+    .project-card:hover{transform:translateY(-4px); border-color:#00ffae;}
+    .project-icon{font-size:32px; margin-bottom:10px;}
+    .project-card p{color:#c9d1d9;}
+    .tags{margin-top:10px;}
+    .tags span{
+      display:inline-block; margin:3px; padding:4px 10px;
+      background:#21262d; border-radius:20px; font-size:12px; color:#00ffae;
+    }
+    .btn-group{margin-top:12px;}
+    .btn-icon{
+      display:inline-block; margin:4px; padding:6px 12px; font-size:14px;
+      background:#21262d; color:#00ffae; border-radius:6px; transition:0.3s;
+    }
+    .btn-icon:hover{background:#00ffae; color:#111;}
+
+    /* Timeline */
+    .timeline{border-left:3px solid #00ffae; margin-left:15px; padding-left:20px;}
+    .timeline div{margin-bottom:25px;}
+    .timeline h4{margin-bottom:6px; color:#e6edf3;}
+    .timeline p{color:#c9d1d9;}
+
+    /* Skills */
+    .skill-groups{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+    .skill-card{border:1px solid var(--line);border-radius:12px;background:#0f1420;padding:16px}
+    .skill-list{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+    .skill{padding:8px 10px;border-radius:999px;background:#0f1420;border:1px solid var(--line);font-size:13px}
+
+
+    /* Contact */
+    #contact .cards{display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:16px; margin-top:12px;}
+    .contact-card{background:#161b22; border:1px solid #30363d; border-radius:12px; padding:16px;}
+    .contact-card a{color:#00ffae;}
+    .contact-form{margin-top:20px; background:#161b22; border:1px solid #30363d; border-radius:12px; padding:20px;}
+    .form-row{display:flex; gap:12px; flex-wrap:wrap;}
+    input, textarea, button{
+      width:100%; padding:10px 12px; border-radius:8px; border:1px solid #30363d; background:#0d1117; color:#e6edf3;
+    }
+    textarea{min-height:110px; resize:vertical;}
+    button{background:#00ffae; color:#111; font-weight:bold; cursor:pointer;}
+    button:hover{background:#00d294;}
+
+    footer{text-align:center; padding:22px; background:#161b22; color:#8b949e;}
+  </style>
 </head>
 <body>
-<div class="wrapper">
-  <main id="terminal" role="region" aria-label="Hacker Terminal">
-    <div id="output" aria-live="polite"></div>
-  </main>
 
-  <div id="suggest" role="listbox" aria-hidden="true"><ul></ul></div>
+  <!-- Navbar -->
+  <nav>
+    <div class="left"><a href="#hero">Hafsa Sheikh</a></div>
+    <div class="right">
+      <a href="https://www.upwork.com/freelancers/hafsas60" target="_blank" class="btn-hire">Hire Me</a>
+      <a href="https://drive.google.com/uc?export=download&id=16LEDys7TgvajJ_3S-zd0M67wDAE7YmSp" class="btn-resume">Download Resume</a>
+    </div>
+  </nav>
 
-  <div id="cmdbar" aria-hidden="false">
-    <div id="input-line">
-      <div class="prompt">C:\></div>
-      <div id="input-wrap">
-        <input id="cmd" autocomplete="off" spellcheck="false" placeholder="type a command..." aria-label="Command input" />
-        <span id="block-caret" aria-hidden="true"></span>
+ 
+
+
+
+  <!-- Hero -->
+  <section id="hero">
+    <div class="hero-card">
+      <p class="hero-tags">UNITY 3D • GAMEPLAY • OPTIMIZATION</p>
+      <h1>Hi, I’m <span class="highlight">Hafsa Sheikh</span> — a Unity 3D Developer crafting immersive, performant games for PC, Mobile & VR.</h1>
+      <p class="hero-desc">
+        I build clean, scalable gameplay systems, integrate assets (animations, audio, VFX), 
+        and optimize performance and memory usage. Strong in 3D math and UI/UX.
+      </p>
+
+      <div class="hero-skills">
+        <span>Unity (C#)</span><span>Gameplay Systems</span><span>Physics</span>
+        <span>UI/HUD</span><span>Profiling & Optimization</span>
+        <span>Git/Bitbucket</span><span>PlayFab</span><span>VR (Oculus)</span>
+      </div>
+
+      <div class="hero-cta">
+
+        <a href="#projects" class="btn-main">🎮 View Projects</a>
+        <a href="#contact" class="btn-secondary">📧 Contact</a>
       </div>
     </div>
-  </div>
+  </section>
 
-  <div id="tip">TIP: Type 'help' to get started.</div>
-</div>
-
-<div id="controls">
-  <div id="mute" class="icon" title="Toggle sound" role="button" aria-pressed="false">
-    <svg viewBox="0 0 24 24"><path d="M3 10v4h4l5 5V5L7 10H3z"/><path d="M16.5 12c0-1.77-.77-3.36-1.98-4.47l-1.43 1.43A4.5 4.5 0 0116.5 12zM14.5 17.07L15.93 18.5C17.5 17 18.5 15.08 18.5 13s-1-4-2.57-5.5L14.5 8.93A6.49 6.49 0 0013 13c0 1.67.48 3.22 1.5 4.07z"/></svg>
-  </div>
-</div>
-
-<!-- Overlay modal for loader + showcase -->
-<div id="overlay" aria-hidden="true">
-  <div class="modal" role="dialog" aria-modal="true">
-    <div id="loaderText">DECRYPTING PROJECT FILE...</div>
-    <div class="loader" aria-hidden="true"><div class="progress" style="width:0%"></div><div class="percent">0%</div></div>
-    <div id="showcaseWrap" style="display:none">
-      <div id="showcaseTitle" style="font-weight:700;margin-top:10px"></div>
-      <div id="showcaseDesc" style="margin-top:6px"></div>
-      <div class="showcase-frame" id="showcaseFrame"></div>
-    </div>
-    <div style="margin-top:12px; text-align:right"><button id="closeOverlay" style="padding:6px 10px;border:1px solid var(--dim);background:transparent;color:var(--fg)">Close</button></div>
-  </div>
-</div>
-
-<div id="full-access"></div>
-
-<script>
-/* ===== Utilities & State ===== */
-const output = document.getElementById('output');
-const cmdInput = document.getElementById('cmd');
-const tip = document.getElementById('tip');
-const muteBtn = document.getElementById('mute');
-const overlay = document.getElementById('overlay');
-const progressBar = overlay.querySelector('.progress');
-const percentLabel = overlay.querySelector('.percent');
-const loaderText = document.getElementById('loaderText');
-const showcaseWrap = document.getElementById('showcaseWrap');
-const showcaseFrame = document.getElementById('showcaseFrame');
-const showcaseTitle = document.getElementById('showcaseTitle');
-const showcaseDesc = document.getElementById('showcaseDesc');
-const closeOverlay = document.getElementById('closeOverlay');
-const suggest = document.getElementById('suggest');
-const suggestList = suggest.querySelector('ul');
-
-let soundOn = true;
-let tabMatches = [];
-let tabIndex = 0;
-
-/* Configuration (projects + commands) */
-const projects = [
-  {code:'racing', title:'RACING_EDGE — Bike/Car Racing', desc:'High-performance mobile racing with tight physics and low-end optimization.', src:'https://www.youtube.com/embed/O_pl-TAtxHU'},
-  {code:'vr', title:'VR_STRIKE — VR Bowling (Quest)', desc:'Realistic physics-based VR bowling with polished inputs.', src:'https://www.youtube.com/embed/TJuODlA7qDM'},
-  {code:'kart', title:'KART_CHAIN — Multiplayer Kart + NFTs', desc:'Networked kart prototype with asset ownership hooks.', src:'https://www.youtube.com/embed/SZ99QHJdv38'},
-  {code:'edu', title:'EDU_QUEST — Educational RPG', desc:'2D RPG with quizzes, cutscenes, PlayFab cloud saves.', src:'https://www.youtube.com/embed/kMPPdmt0_aY'},
-  {code:'puzzle', title:'PUZZLE_FRAME — Animated Puzzle', desc:'Puzzle experience with animation system for retention.', src:'https://www.youtube.com/embed/IlIHceq9jIs'},
-  {code:'ui', title:'UI_ANIMS — UI Animation Collection', desc:'UI motion studies and animations for games.', src:'https://www.youtube.com/embed/Ok6Qg8b8lWI'}
-];
-
-const commandsList = ['help','profile','projects','skills','contact','resume','theme','sound','sudo','funfacts','future','clear'];
-const projectCodes = projects.map(p=>p.code);
-
-/* ===== Typing animation queue (simple) ===== */
-let queue = Promise.resolve();
-const typeSpeed = 14;
-
-function typeLine(text){
-  queue = queue.then(()=> new Promise(resolve=>{
-    const div = document.createElement('div');
-    div.className = 'line';
-    output.appendChild(div);
-    let i=0;
-    const tick = setInterval(()=>{
-      div.textContent = text.slice(0, ++i);
-      output.scrollTop = output.scrollHeight;
-      if(soundOn) AudioEngine.tick(); // Added typing sound
-      if(i>=text.length){ clearInterval(tick); resolve(); }
-    }, typeSpeed);
-  }));
-  return queue;
-}
-function typeBlock(lines){
-  lines.forEach(l=>{ typeLine(l); });
-  return queue;
-}
-
-/* ===== Audio (WebAudio) ===== */
-const AudioEngine = (function(){
-  const ctx = new (window.AudioContext || window.webkitAudioContext)();
-  const master = ctx.createGain(); master.gain.value = 0.12; master.connect(ctx.destination);
-
-  function tone(freq,dur,type='sine',gain=0.08){
-    const t0=ctx.currentTime;
-    const o = ctx.createOscillator(); o.type = type; o.frequency.value = freq;
-    const g = ctx.createGain(); g.gain.setValueAtTime(gain,t0);
-    g.gain.exponentialRampToValueAtTime(0.0001,t0+dur);
-    o.connect(g).connect(master); o.start(t0); o.stop(t0+dur+0.02);
-  }
-  function tick(){ tone(900,0.02,'square',0.06); }
-  function enter(){ tone(520,0.08,'sine',0.08); }
-  function error(){ tone(120,0.12,'sawtooth',0.12); }
-  function hum(){ /* optional */ }
-  return { tick, enter, error, tone, hum, ctx, master };
-})();
-
-/* ===== Print helpers ===== */
-function print(text){ return typeLine(text); }
-function printBlock(lines){ return typeBlock(lines); }
-function setTip(t){ tip.textContent = "TIP: " + t; }
-
-/* ===== Boot & fake password (hint hire_hafsa) ===== */
-async function boot(){
-  await print("[BOOTING RECRUITER INTERFACE...]");
-  await print("Connecting to HAFSA_MAINFRAME...");
-  await print("ACCESS REQUEST DETECTED.");
-  await print("");
-  await print("SECURITY PROTOCOL ACTIVE — Please enter recruiter access password:");
-  setTip('Try something like "hire_hafsa"');
-  cmdInput.focus();
-}
-boot();
-
-/* ===== Command handlers ===== */
-function openProject(code){
-  const p = projects.find(x=>x.code===code);
-  if(!p) return print("404: Project not found.");
-  overlay.classList.add('show'); overlay.setAttribute('aria-hidden','false');
-  showcaseWrap.style.display='none';
-  loaderText.textContent='DECRYPTING PROJECT FILE...';
-  progressBar.style.width='0%'; percentLabel.textContent='0%';
+ <!-- Hero -->
   
-  let pct=0;
-  const interval = setInterval(()=>{
-    pct += Math.floor(Math.random()*8)+4; if(pct>100) pct=100;
-    progressBar.style.width=pct+'%'; percentLabel.textContent=pct+'%';
-    if(soundOn) AudioEngine.tick();
-    if(pct>=100){
-      clearInterval(interval);
-      setTimeout(()=>{
-        loaderText.textContent='DECRYPT COMPLETE';
-        showcaseTitle.textContent=p.title;
-        showcaseDesc.textContent=p.desc;
-        // Updated to fill modal
-        showcaseFrame.innerHTML = `<iframe src="${p.src}" frameborder="0"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-          allowfullscreen></iframe>`;
-        showcaseWrap.style.display='block';
-        if(soundOn) AudioEngine.enter();
-      }, 350);
+    <div class="stats">
+      <div class="stat"><h3>3+</h3><p>Years Experience</p></div>
+      <div class="stat"><h3>10+</h3><p>Projects Shipped</p></div>
+      <div class="stat"><h3>100+</h3><p>Levels Designed</p></div>
+    </div>
+ 
+  <!-- Projects -->
+  <section id="projects">
+    <h2>Featured Projects</h2>
+    <div class="projects-grid">
+
+      <div class="project-card">
+        <div class="project-icon">🔷</div>
+        <h3>Hexa Sort</h3>
+        <p>Number puzzle brain game with engaging sorting mechanics and smooth UI.</p>
+        <div class="btn-group">
+          <a class="btn-icon" href="https://play.google.com/store/apps/details?id=com.hexasort.number.puzzle.brain.games&pli=1" target="_blank">📱 Play Store</a>
+          <a class="btn-icon" href="https://youtube.com/shorts/IlIHceq9jIs?si=WNQ-SEw0w7HcqzDa" target="_blank">▶️ Video</a>
+        </div>
+        <div class="tags"><span>Unity</span><span>Puzzle</span></div>
+      </div>
+
+      <div class="project-card">
+        <div class="project-icon">🎱</div>
+        <h3>Connect Balls - Hyper Casual</h3>
+        <p>Minimalist hyper casual ball-connecting puzzle game.</p>
+        <div class="btn-group">
+          <a class="btn-icon" href="https://play.google.com/store/apps/details?id=com.puzzle.color.eight.pool.balls.games" target="_blank">📱 Play Store</a>
+        </div>
+        <div class="tags"><span>Unity</span><span>Casual</span></div>
+      </div>
+
+      <div class="project-card">
+        <div class="project-icon">🚗</div>
+        <h3>Car Simulation: 100+ Levels</h3>
+        <p>Modular architecture, difficulty curves, and tuned progression.</p>
+        <div class="btn-group">
+          <a class="btn-icon" href="https://play.google.com/store/apps/details?id=com.wisdomgames.car.parking.games.simulator" target="_blank">📱 Play Store</a>
+        </div>
+        <div class="tags"><span>Unity</span><span>Simulation</span><span>Level Design</span></div>
+      </div>
+
+      <div class="project-card">
+        <div class="project-icon">🏍️</div>
+        <h3>High-Performance Bike Racer</h3>
+        <p>3D racing systems, physics, camera, UI/HUD, and profiling.</p>
+        <div class="btn-group">
+          <a class="btn-icon" href="https://apkcombo.com/ar/trails-bike-race-racing-games/com.epicgames.motobike.trafficracer.bikeracing.bikeracegames.free/" target="_blank">📱 Download</a>
+          <a class="btn-icon" href="https://youtu.be/O_pl-TAtxHU?si=qYwp-eQUMjDRCS0L" target="_blank">▶️ Video</a>
+        </div>
+        <div class="tags"><span>Unity</span><span>Racing</span><span>Optimization</span></div>
+      </div>
+
+      <div class="project-card">
+        <div class="project-icon">🎳</div>
+        <h3>VR Bowling (Oculus Quest)</h3>
+        <p>Realistic physics, interactions & comfort-first VR UX.</p>
+        <div class="btn-group">
+          <a class="btn-icon" href="https://www.youtube.com/watch?v=TJuODlA7qDM" target="_blank">▶️ Video</a>
+        </div>
+        <div class="tags"><span>Unity</span><span>VR</span><span>Physics</span></div>
+      </div>
+
+      <div class="project-card">
+        <div class="project-icon">🎓</div>
+        <h3>2D Educational RPG</h3>
+        <p>Cutscenes, quiz combat, PlayFab cloud saves & auth.</p>
+        <div class="btn-group">
+          <a class="btn-icon" href="https://amerchoudhury.itch.io/crescent-chronicles-prototype-v2" target="_blank">🎮 Itch</a>
+          <a class="btn-icon" href="https://youtu.be/kMPPdmt0_aY?si=may8bAqHB796IcKt" target="_blank">▶️ Video</a>
+        </div>
+        <div class="tags"><span>Unity</span><span>2D</span><span>PlayFab</span></div>
+      </div>
+
+      <div class="project-card">
+        <div class="project-icon">🏎️</div>
+        <h3>Multiplayer Kart Prototype</h3>
+        <p>Networked gameplay, sync inputs, asset integration.</p>
+        <div class="btn-group">
+          <a class="btn-icon" href="https://youtu.be/SZ99QHJdv38?si=4ay4ji0fTq7XpxvZ" target="_blank">▶️ Demo</a>
+        </div>
+        <div class="tags"><span>Unity</span><span>Multiplayer</span><span>Prototype</span></div>
+      </div>
+
+      <div class="project-card">
+        <div class="project-icon">✨</div>
+        <h3>UI Animations Showcase</h3>
+        <p>Snappy UI transitions, menus, and polish animations.</p>
+        <div class="btn-group">
+          <a class="btn-icon" href="https://youtube.com/shorts/IlIHceq9jIs?si=igagIKQ3cfjmfpAu" target="_blank">▶️ Demo 1</a>
+          <a class="btn-icon" href="https://youtube.com/shorts/Ok6Qg8b8lWI?si=udm9tZ5qI823Yd5n" target="_blank">▶️ Demo 2</a>
+        </div>
+        <div class="tags"><span>Unity</span><span>UI/UX</span></div>
+      </div>
+
+      <div class="project-card">
+        <div class="project-icon">🚀</div>
+        <h3>Car Racing Game (Coming Soon)</h3>
+        <p>Placeholder for upcoming gameplay video.</p>
+        <div class="btn-group">
+          <a class="btn-icon" href="#" target="_blank">▶️ Video (Coming Soon)</a>
+        </div>
+        <div class="tags"><span>Unity</span><span>Racing</span></div>
+      </div>
+
+    </div>
+  </section>
+
+   <!-- Experience -->
+  <section id="experience">
+    <h2>Professional Experience</h2>
+    <div class="timeline">
+      <div>
+        <h4>Sr. Game Developer — 9D Technologies, Rawalpindi</h4>
+        <p><em>Aug 2022 – Mar 2025</em></p>
+        <p>Built immersive 2D/3D titles (incl. high-performance bike racer), designed scalable systems, created 100+ car-sim levels, and led optimization sprints improving mobile performance by ~30%.</p>
+      </div>
+      <div>
+        <h4>Freelance Game Developer — Upwork</h4>
+        <p><em>Aug 2023 – Dec 2023</em></p>
+        <p>Designed and launched a 2D educational RPG with cinematic cutscenes and PlayFab cloud saves & auth; used Bitbucket and agile boards for delivery.</p>
+      </div>
+      <div>
+        <h4>Jr. Game Developer — Rapidev Games (NUST), Islamabad</h4>
+        <p><em>Mar 2022 – Jul 2022</em></p>
+        <p>Implemented multiplayer kart features with NFT asset integration; delivered VR Bowling for Oculus Quest; prototyped PC 3D Bowling with polished UI and input.</p>
+      </div>
+    </div>
+  </section>
+
+
+<!-- Skills -->
+  <section id="skills" class="container">
+    <h2 class="section-title"><i class="fa-solid fa-screwdriver-wrench"></i> Skills & Tools</h2>
+    <div class="skill-groups">
+      <div class="skill-card reveal">
+        <strong>Game Dev</strong>
+        <div class="tags">
+          <span >Unity 3D</span><span class="skill">C#</span><span class="skill">Gameplay Systems</span>
+          <span class="skill">AI/State</span><span class="skill">Physics</span><span class="skill">Cameras</span>
+          <span class="skill">UI/HUD</span><span class="skill">VFX Integration</span>
+        </div>
+      </div>
+
+      <div class="skill-card reveal">
+        <strong>Optimization & QA</strong>
+       
+	<div class="tags">
+          <span>Profiling</span><span >Memory</span><span >Build Size</span>
+          <span >Bugfixing</span><span >Playtesting</span>
+	</div>
+     </div>
+
+      <div class="skill-card reveal">
+        <strong>Pipelines</strong>
+        	<div class="tags"><span>Git</span><span>Bitbucket</span><span>Perforce</span>
+          <span>Agile/Scrum</span><span>Code Reviews</span></div>
+         
+ 
+       
+      </div>
+      <div class="skill-card reveal">
+        <strong>Assets & Platforms</strong>
+        <div class="tags">
+          <span class="skill">Blender</span><span class="skill">Maya</span><span class="skill">3ds Max</span>
+          <span class="skill">PC</span><span class="skill">Mobile</span><span class="skill">VR (Oculus)</span>
+          <span class="skill">PlayFab</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+
+  <!-- Education -->
+  <section id="education">
+    <h2>Education</h2>
+    <div class="timeline">
+      <div>
+        <h4>BS Software Engineering</h4>
+        <p>Fatima Jinnah Women University, Pakistan — <em>2017–2021</em></p>
+        <p>Capstone: 3D Tennis Game with real-time physics and gameplay mechanics in Unity.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Contact -->
+  <section id="contact">
+    <h2>Contact</h2>
+    <p>If you’d like to collaborate or hire me for your next game, reach out below.</p>
+
+    <div class="cards">
+      <div class="contact-card">
+        <h3>📧 Email</h3>
+        <p><a id="emailLink" href="mailto:engr.hafsasheikh@gmail.com">engr.hafsasheikh@gmail.com</a></p>
+        <button onclick="copyEmail()">Copy Email</button>
+      </div>
+      <div class="contact-card">
+        <h3>💼 Upwork</h3>
+        <p><a href="https://www.upwork.com/freelancers/hafsas60" target="_blank">upwork.com/freelancers/hafsas60</a></p>
+      </div>
+      <div class="contact-card">
+        <h3>🌐 Resume</h3>
+	<p><a class="btn-hire">Download Resume</a></p>
+<button onclick="window.location.href='https://drive.google.com/uc?export=download&id=16LEDys7TgvajJ_3S-zd0M67wDAE7YmSp';">Download</button>
+
+             </div>
+    </div>
+
+    <div class="contact-form">
+      <h3>Send a quick message</h3>
+      <div class="form-row">
+        <input id="nameInput" type="text" placeholder="Your name"/>
+        <input id="subjectInput" type="text" placeholder="Subject"/>
+      </div>
+      <textarea id="messageInput" placeholder="Your message"></textarea>
+      <div style="margin-top:12px;">
+        <button onclick="sendMail()">Open in Email App</button>
+      </div>
+      <p style="margin-top:10px; font-size:13px; color:#8b949e;">This uses <code>mailto:</code> to open your email client—no data is stored on this site.</p>
+    </div>
+  </section>
+
+  
+
+  <script>
+    function copyEmail(){
+      const email = "engr.hafsasheikh@gmail.com";
+      navigator.clipboard.writeText(email).then(()=>{
+        alert("Email copied: " + email);
+      });
     }
-  }, 180);
-  // mark viewed localStorage
-  const seen = JSON.parse(localStorage.getItem('viewed')||'[]');
-  if(!seen.includes(code)){ seen.push(code); localStorage.setItem('viewed', JSON.stringify(seen)); }
-  // check full access
-  setTimeout(()=>{ const seenNow = JSON.parse(localStorage.getItem('viewed')||'[]'); if(projects.every(p=>seenNow.includes(p.code))){ print(""); print("Recruiter... you have fully explored my career archives. Full Access unlocked."); print("Type 'contact' to reach me."); } }, 1800);
-}
-
-function buildProjectList(){
-  const lines = ["Encrypted Project Files:"];
-  projects.forEach(p=> lines.push(`[ ${p.code} ]  → ${p.title}`));
-  lines.push("", "Type a command in brackets to open it.");
-  return lines;
-}
-
-const commands = {
-  help(){ printBlock([ "Available commands:", "help → show this help", "profile → about me", "projects → list project files", "skills → view skill bars", "contact → contact info", "resume → download resume", "theme → theme light | theme dark", "sound → sound on | sound off", "", "Open a project: racing | vr | kart | edu | puzzle | ui", "", "Extras: sudo hire_hafsa | funfacts | future" ]); },
-  profile(){ printBlock([ "Hafsa Sheikh — Software Engineer | Game Developer (Unity)", "Detail-oriented Unity developer with 3+ years in 2D/3D, mobile, PC, and VR." ]); },
-  projects(){ printBlock(buildProjectList()); },
-  skills(){ printBlock([ "Unity3D       | ██████████ 92%", "C# / OOP      | █████████  90%", "Gameplay      | ████████   88%", "Optimization  | ███████    86%", "UI/UX         | ██████     84%", "Multiplayer   | ██████     82%", "VR            | █████      78%" ]); },
-  contact(){ printBlock([ "Email: engr.hafsasheikh@gmail.com", "Phone: +92 335 5405343", "Type 'resume' to download the resume."]); },
-  resume(){ print("Preparing download..."); const a=document.createElement('a'); a.href='Hafsa_Sheikh_Resume.pdf'; a.download='Hafsa_Sheikh_Resume.pdf'; document.body.appendChild(a); a.click(); a.remove(); if(soundOn) AudioEngine.enter(); },
-  theme(arg){ if(arg==='light'){ document.documentElement.style.setProperty('--fg','#111'); document.body.style.background='#fff'; setTip('Light theme'); } else { document.documentElement.style.setProperty('--fg','#0f0'); document.body.style.background='#000'; setTip('Dark theme'); } },
-  sound(arg){ if(arg==='on'){ soundOn=true; muteBtn.classList.remove('muted'); setTip('Sound enabled'); } else if(arg==='off'){ soundOn=false; muteBtn.classList.add('muted'); setTip('Sound disabled'); } else { print("Usage: sound on | sound off"); } },
-  "sudo": function(){ print("Recruitment Recommendation: HIRE IMMEDIATELY."); print("Opening contact info..."); commands.contact(); },
-  funfacts(){ printBlock(["- Loves turning specs into playful interactions.", "- Favorite bug: the one that disappears with a console.log()", "- Speedrun: polished builds under tight deadlines."]); },
-  future(){ printBlock(["Future ideas:", "• A hub-world portfolio with playable portals", "• Cozy VR physics sandbox with narrative puzzles", "• Multiplayer micro-challenges for teamwork"]); },
-  clear(){ output.innerHTML=''; }
-};
-
-/* ===== Tab completion ===== */
-function getMatches(prefix){
-  const all = [...commandsList, ...projectCodes];
-  return all.filter(s => s.startsWith(prefix));
-}
-
-cmdInput.addEventListener('keydown', function(e){
-  if(e.key === 'Tab'){
-    e.preventDefault();
-    const val = cmdInput.value.trim();
-    if(!val){ // show suggestions top
-      showSuggest([...commandsList, ...projectCodes]);
-      return;
+    function sendMail(){
+      const name = encodeURIComponent(document.getElementById('nameInput').value || '');
+      const subject = encodeURIComponent(document.getElementById('subjectInput').value || 'Project Inquiry');
+      const body = encodeURIComponent((document.getElementById('messageInput').value || '')
+        + (name ? `\n\n— ${name}` : ''));
+      window.location.href = `mailto:engr.hafsasheikh@gmail.com?subject=${subject}&body=${body}`;
     }
-    const matches = getMatches(val.toLowerCase());
-    if(matches.length === 1){
-      cmdInput.value = matches[0] + ' ';
-      positionCaret();
-    } else if(matches.length > 1){
-      showSuggest(matches);
-    }
-  }
-});
-
-function showSuggest(list){
-  suggestList.innerHTML='';
-  list.slice(0,12).forEach(it=>{
-    const li = document.createElement('li');
-    li.textContent = it;
-    li.addEventListener('click', ()=>{ cmdInput.value = it + ' '; hideSuggest(); cmdInput.focus(); });
-    suggestList.appendChild(li);
-  });
-  suggest.style.display='block'; suggest.setAttribute('aria-hidden','false');
-}
-function hideSuggest(){ suggest.style.display='none'; suggest.setAttribute('aria-hidden','true'); }
-
-/* ===== Input handling + password fake gate + choices ===== */
-let passwordStage = true;
-cmdInput.addEventListener('keydown', function(e){
-  // update caret position visually
-  positionCaret();
-  if(e.key === 'Enter'){
-    const raw = cmdInput.value.trim();
-    if(!raw) return;
-    typeLine("C:\\> " + raw);
-    cmdInput.value = '';
-    hideSuggest();
-    if(passwordStage){
-      passwordStage = false;
-      if(raw.toLowerCase() === 'hire_hafsa'){
-        print("ACCESS GRANTED — Recruitment Recommendation: HIRE IMMEDIATELY.").then(()=>{
-          print("Would you like to explore my portfolio or proceed to recruitment?");
-          print("Type: portfolio  OR  recruit");
-          setTip("Type 'portfolio' to explore, or 'recruit' to jump to contact.");
-        });
-      } else {
-        print("ACCESS GRANTED — Proceeding to portfolio...").then(()=>{ commands.help(); setTip("Type 'projects' to see my work."); });
-      }
-      return;
-    }
-
-    // if post-hire choice
-    if(raw.toLowerCase() === 'portfolio'){ commands.help(); return; }
-    if(raw.toLowerCase() === 'recruit'){ commands.contact(); return; }
-
-    // commands and project codes
-    const parts = raw.split(/\s+/);
-    const cmd = parts[0].toLowerCase();
-    const arg = parts[1] ? parts[1].toLowerCase() : undefined;
-    if(commands[cmd]){ commands[cmd](arg); return; }
-    if(projectCodes.includes(cmd)){
-      openProject(cmd); return;
-    }
-    // special: sudo hire_hafsa shortcut
-    if(raw.toLowerCase() === 'sudo hire_hafsa'){ commands.sudo(); return; }
-    print("404 Command Not Found — type 'help' for options.");
-  }
-});
-
-/* caret position by ch count */
-function positionCaret(){
-  const caret = document.getElementById('block-caret');
-  const wrap = document.getElementById('input-wrap');
-  const val = cmdInput.value || '';
-  // left offset: 8px padding + chars * ch width (approximate using monospace)
-  caret.style.left = (8 + (val.length) * 9) + 'px';
-}
-
-/* initial caret */
-positionCaret();
-cmdInput.focus();
-
-/* mute icon toggle */
-muteBtn.addEventListener('click', ()=>{
-  soundOn = !soundOn;
-  muteBtn.classList.toggle('muted', !soundOn);
-  muteBtn.setAttribute('aria-pressed', (!soundOn).toString());
-});
-
-/* overlay close */
-closeOverlay.addEventListener('click', ()=>{ overlay.classList.remove('show'); overlay.setAttribute('aria-hidden','true'); showcaseFrame.innerHTML=''; });
-overlay.addEventListener('click', (e)=>{ if(e.target === overlay){ overlay.classList.remove('show'); overlay.setAttribute('aria-hidden','true'); showcaseFrame.innerHTML=''; } });
-
-/* click outside suggest hides */
-document.addEventListener('click', (e)=>{ if(!suggest.contains(e.target) && e.target !== cmdInput) hideSuggest(); });
-
-/* helper to quickly print on load if desired */
-print("CONNECTED: HAFSA_MAINFRAME (interactive mode)").then(()=>{});
-
-</script>
+  </script>
+<footer>
+    <p>© 2025 Hafsa Sheikh — Built with ❤️</p>
+  </footer>
 </body>
 </html>
